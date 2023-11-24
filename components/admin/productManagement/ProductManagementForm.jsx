@@ -3,37 +3,14 @@ import { handleProduct } from "@/app/api/handleProduct"
 import { handleProductCategory } from "@/app/api/handleProductCategory"
 import Notification from "@/components/Notification"
 import { AnimatePresence, motion } from "framer-motion"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { CiCircleRemove } from "react-icons/ci"
 import { IoCopyOutline } from "react-icons/io5"
+import { UserAuth } from "@/context/AuthContext"
+import { userAgent } from "next/server"
 
 const ProductManagementForm = ({
-	currentProductChoose = {
-		product: {
-			product_id: "PRD005",
-			name_pr: "Apple MacBook Air",
-			name_serial: "MA007",
-			detail:
-				"13.3-inch Retina display, Apple M1 chip, 8GB RAM, 256GB SSD, macOS",
-			price: 17000000,
-			quantity_pr: 25,
-			guarantee_period: 12,
-		},
-		category: {
-			category_id: "qRsTuV4wXyZ56789",
-			category_name: "Laptop",
-		},
-		supplier: {
-			supplier_id: "SUPLLIER002",
-			supplier_name: "Apple",
-		},
-		image: {
-			image_id: "PRD005001",
-			product_id: "PRD005",
-			image_href:
-				"https://localhost:7067/Upload/product/PRD005/PRD005_1.jpg",
-		},
-	},
+	currentProductChoose,
 	setCurrentProductChoose,
 	category,
 	setCategory,
@@ -48,11 +25,27 @@ const ProductManagementForm = ({
 	const [imageListDisplay, setImageListDisplay] = useState(
 		[]
 	)
+	const { token, user } = UserAuth;
+	const [data, setData] = useState({
+		product_id: currentProductChoose?.product_id,
+		name_pr: currentProductChoose?.name_pr,
+		name_serial: currentProductChoose?.product?.name_serial,
+		detail: currentProductChoose?.detail,
+		price: currentProductChoose?.price,
+		quantity_pr: currentProductChoose?.quantity_pr,
+		guarantee_period:
+			currentProductChoose?.guarantee_period,
+		supplier_id: currentProductChoose?.supplier?.supplier_id,
+		category_id:
+			currentProductChoose?.category?.[0]?.category_id,
+	})
 	const [notifications, setNotifications] = useState(false)
 
 	const handleProductValueChange = (e) => {
 		const { value, id } = e.target
-
+		console.log("data: ", data)
+		console.log("id: ", id)
+		console.log("value: ", value)
 		if (
 			id === "name_pr" ||
 			id === "price" ||
@@ -62,13 +55,27 @@ const ProductManagementForm = ({
 			id === "quantity_pr" ||
 			id === "category_id"
 		) {
-			setCurrentProductChoose((pre) => {
-				const preProduct = { ...pre }
-				preProduct.product[id] = value
-				return preProduct
-			})
+			console.log("set")
+			setData((pre) => ({ ...pre, [id]: value }))
 		}
 	}
+
+	useEffect(() => {
+		console.log("data in use effect run:", data)
+		setData({
+			product_id: currentProductChoose?.product_id,
+			name_pr: currentProductChoose?.name_pr,
+			name_serial: currentProductChoose?.name_serial,
+			detail: currentProductChoose?.detail,
+			price: currentProductChoose?.price,
+			quantity_pr: currentProductChoose?.quantity_pr,
+			guarantee_period:
+				currentProductChoose?.guarantee_period,
+			supplier_id: currentProductChoose?.suppliers?.supplier_id,
+			category_id:
+				currentProductChoose?.category?.[0]?.category_id,
+		})
+	}, [currentProductChoose])
 
 	const handleRemoveImageOld = async (x) => {
 		try {
@@ -107,14 +114,14 @@ const ProductManagementForm = ({
 	}
 
 	const handleSubmit = async () => {
-		const product_id = currentProductChoose.product.product_id
+		const product_id = currentProductChoose.product_id
 
 		// handle add new image
 
 		const imageList = [...imageFile]
 
 		if (imageList.length !== 0) {
-			console.log("udpate image")
+			console.log("update image")
 			const formData = new FormData()
 
 			for (let i = 0; i < imageList.length; i++) {
@@ -132,32 +139,31 @@ const ProductManagementForm = ({
 
 		const updatedProduct = {
 			product_id: product_id,
-			name_pr: currentProductChoose.product.name_pr,
-			name_serial: currentProductChoose.product.name_serial,
-			detail: currentProductChoose.product.detail,
-			price: currentProductChoose.product.price,
-			quantity_pr: currentProductChoose.product.quantity_pr,
-			guarantee_period:
-				currentProductChoose.product.guarantee_period,
-			supplier_id: currentProductChoose.supplier.supplier_id,
-		}
-
-		const updatedProductCategory = {
-			productId: product_id,
-			categoryId: currentProductChoose.category.category_id,
+			name_pr: data.name_pr,
+			name_serial: data.name_serial,
+			detail: data.detail,
+			price: Number.parseInt(data.price),
+			quantity_pr: Number.parseInt(data.quantity_pr),
+			guarantee_period: Number.parseInt(data.guarantee_period),
+			supplier_id: data.supplier_id,
 		}
 
 		await handleProductCategory.updateProductCategory(
-			updatedProductCategory
+			{
+				productId: product_id,
+				categoryId:
+					currentProductChoose?.category?.[0]?.category_id,
+			},
+			data.category_id
 		)
-		await handleProduct.updateProduct(updatedProduct)
+		await handleProduct.updateProduct(updatedProduct, token)
 
 		setNotifications(true)
 	}
 
 	return (
 		<motion.div
-			key={currentProductChoose?.product_id}
+			key={currentProductChoose?.product?.product_id}
 			initial={{ opacity: 0, x: 10 }}
 			whileInView={{ opacity: 1, x: 0 }}
 			exit={{ opacity: 0, x: 10 }}
@@ -298,7 +304,7 @@ const ProductManagementForm = ({
 						<motion.input
 							disabled={x.key === "product_id"}
 							id={x.key}
-							value={currentProductChoose?.[x.key]}
+							value={data[x.key]}
 							onChange={handleProductValueChange}
 							className='outline-none border-b font-semibold border-black/20 w-full'
 						/>
@@ -310,7 +316,7 @@ const ProductManagementForm = ({
 					</label>
 					<motion.textarea
 						id={"detail"}
-						value={currentProductChoose?.detail}
+						value={data.detail}
 						onChange={handleProductValueChange}
 						className='outline-none border-b font-semibold border-black/20 w-full'
 					/>
@@ -332,7 +338,7 @@ const ProductManagementForm = ({
 						</label>
 						<motion.input
 							id={x.key}
-							value={currentProductChoose?.[x.key]}
+							value={data[x.key]}
 							onChange={handleProductValueChange}
 							className='outline-none border-b border-black/20 font-semibold w-full'
 						/>
@@ -349,10 +355,9 @@ const ProductManagementForm = ({
 					>
 						{category.map((x, i) => (
 							<option
-								selected=
-								{
-									currentProductChoose?.category ? currentProductChoose?.category[0]?.category_id ===
-										x.category_id : undefined
+								selected={
+									currentProductChoose?.category?.[0]
+										?.category_id === x.category_id
 								}
 								key={i}
 								value={x.category_id}
@@ -371,7 +376,7 @@ const ProductManagementForm = ({
 						id='supplier_id'
 						onChange={handleProductValueChange}
 					>
-						{supplier?.map((x, i) => (
+						{supplier.map((x, i) => (
 							<option
 								selected={
 									currentProductChoose?.suppliers?.supplier_id ===

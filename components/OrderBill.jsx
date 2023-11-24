@@ -63,7 +63,11 @@ const OrderBill = () => {
 
 			<div className='h-[1px] bg-black/40 w-full mt-[12px]'></div>
 
-			<OrderFormData />
+			<OrderFormData
+				cart={cart}
+				setCart={setCart}
+				totalPrice={totalPrice}
+			/>
 		</div>
 	)
 }

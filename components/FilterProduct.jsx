@@ -5,26 +5,16 @@ import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { CiFilter, CiPercent } from "react-icons/ci"
 import { convertToVND } from "@/utils/until"
+import { useRouter, useSearchParams } from "next/navigation"
 
-const FilterProduct = ({ onFilterChange }) => {
+const FilterProduct = ({ onFilterChange, filter }) => {
+	const searchParams = useSearchParams()
 	const [show, setShow] = useState(false)
-	const [current, setCurrent] = useState({})
-	const [formatPrice, setFormatPrice] = useState({
-		minPrice: 0,
-		maxPrice: 999_999_999,
-	})
 
 	const [priceRange, setPriceRange] = useState({
 		minPrice: 0,
 		maxPrice: 999_999_999,
 	})
-	useEffect(() => {
-		onFilterChange((pre) => {
-			const { id, ...rest } = current
-
-			return { ...pre, ...rest }
-		})
-	}, [current])
 
 	useEffect(() => {
 		const handleKeyDown = (e) => {
@@ -123,28 +113,26 @@ const FilterProduct = ({ onFilterChange }) => {
 												<motion.div
 													variants={variant}
 													initial='init'
-													animate={() => {
-														if (x.id === 1) {
-															if (
-																current.priceIdentify == `${x.id} ${y.id}`
-															)
-																return "click"
-														}
-
-														return "init"
-													}}
+													whileTap='tap'
 													onClick={() => {
-														setCurrent((prevFilter) => {
-															if (x.id === 1) {
-																return {
-																	...prevFilter,
-																	SortBy: "price",
-																	IsDescending: y.type === "Desc",
-																	priceIdentify: `${x.id} ${y.id}`,
-																}
-															}
+														const category_id =
+															searchParams.get("categoryId")
 
-															return prevFilter
+														onFilterChange(() => {
+															if (x.id == 1) {
+																return category_id
+																	? {
+																		...filter,
+																		SortBy: "price",
+																		IsDescending: y.type === "Desc",
+																		categoryId: category_id,
+																	}
+																	: {
+																		...filter,
+																		SortBy: "price",
+																		IsDescending: y.type === "Desc",
+																	}
+															}
 														})
 													}}
 													className='text-2xl cursor-pointer'
@@ -249,9 +237,9 @@ const filterData = [
 
 const variant = {
 	init: {
-		opacity: 0.5,
-	},
-	click: {
 		opacity: 1,
+	},
+	tap: {
+		color: "red",
 	},
 }

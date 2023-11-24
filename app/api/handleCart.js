@@ -39,10 +39,12 @@ export const handleCart = {
 			},
 		})
 	},
-	EmptyCartUser: async (userId, token) =>
-		await axiosClient.delete(
-			"/Cart/EmptyCart?user_id=" + userId,
+	EmptyCartUser: async (data, token) => {
+		console.log(data)
+		await axiosClient.post(
+			"/cart/EmptyCart", data,
 			{ headers: { Authorization: `Bearer ${token}` } }
-		),
+		)
+	},
 
 }

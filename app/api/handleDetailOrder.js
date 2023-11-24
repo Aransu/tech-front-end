@@ -4,7 +4,7 @@ import { axiosClient } from "./axiosClient"
 export const handleDetailOrder = {
 	addNewDetailOrder: async (data, token) =>
 		await axiosClient.post(
-			"/DetailOrder/AddNewDetailOrder",
+			"/detailOrder/addNewOrderDetail",
 			data,
 			{
 				headers: {

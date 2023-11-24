@@ -1,34 +1,20 @@
 "use client"
 import { UserAuth } from "@/context/AuthContext"
-import { UserCart } from "@/context/CartContex"
 import { v4 as uuidv4 } from "uuid"
 
-import { useState } from "react"
-import { motion } from "framer-motion"
-import { useEffect } from "react"
+import { handleCart } from "@/app/api/handleCart"
+import { handleDetailOrder } from "@/app/api/handleDetailOrder"
+import { handleOrder } from "@/app/api/handleOrder"
 import {
 	isValidEmail,
 	isValidPhoneNumber,
 } from "@/utils/until"
-import { handleOrder } from "@/app/api/handleOrder"
-import { handleDetailOrder } from "@/app/api/handleDetailOrder"
-import { handleCart } from "@/app/api/handleCart"
+import { motion } from "framer-motion"
 import { useRouter } from "next/navigation"
+import { useState } from "react"
 import CircleLoader from "./CircleLoader"
 
-const OrderFormData = () => {
-	const {
-		totalProduct,
-		setTotalProduct,
-		cart,
-		setCart,
-		cartLoading,
-		setCartLoading,
-		setTriggerRerender,
-		triggerRerender,
-		totalPrice,
-		setTotalPrice,
-	} = UserCart()
+const OrderFormData = ({ cart, setCart, totalPrice }) => {
 	const {
 		user,
 		setUser,
@@ -60,15 +46,16 @@ const OrderFormData = () => {
 
 		let errorMessage = ""
 		if (!value.trim()) {
-			errorMessage = `Vui lòng nhập ${
-				id == "name"
-					? "tên"
-					: id == "email"
+			errorMessage = `Vui lòng nhập ${id == "name"
+				? "tên"
+				: id == "email"
 					? "email"
 					: id == "password"
-					? "mật khẩu"
-					: "Số điện thoại"
-			}`
+						? "mật khẩu"
+						: id == "phone"
+							? "số điện thoại"
+							: "địa chỉ"
+				}`
 		} else if (id === "phone" && !isValidPhoneNumber(value)) {
 			errorMessage = "Sai định dạng số điện thoại"
 		} else if (id === "email" && !isValidEmail(value))
@@ -89,17 +76,19 @@ const OrderFormData = () => {
 	const handleSubmit = async () => {
 		setLoading(true)
 		const orderId = uuidv4()
-
+		console.log(user)
 		const order = {
-			orderId,
-			userId: user.user_id,
+			order_id: orderId,
 			// createOrderAt: new Date().getTime(),
-			...data,
+			user_id: user.user_id,
+			name: user.name,
+			email: user.email,
+			phone: user.phone,
+			address: "testAdd",
 			state: "pending",
-			note: data.Note || "",
-			total: totalPrice,
+			note: data.Note || "khong co",
 			discount: "2",
-			deliveryFee: 0,
+			delivery_fee: "0",
 		}
 
 		// const cart = [
@@ -132,20 +121,22 @@ const OrderFormData = () => {
 		// 		},
 		// 	},
 		// ]
-
+		console.log(cart)
 		const detailOrder = [...cart].map((x) => ({
 			orderId,
 			productId: x.product.product_id,
 			pricePr: x.product.price,
 			quantityPr: x.quantity,
 		}))
-
+		console.log("adding these item:", detailOrder)
 		await handleOrder.addNewOrder(order, token)
-		await handleDetailOrder.addNewDetailOrder(
-			detailOrder,
-			token
-		)
-		await handleCart.EmptyCartUser(user.user_id, token)
+		// await handleDetailOrder.addNewDetailOrder(
+		// 	detailOrder,
+		// 	token
+		// )
+		console.log(user)
+		await handleCart.EmptyCartUser(user, token)
+		setCart([])
 		setLoading(false)
 		router.push("/upcomming/success")
 	}
@@ -220,9 +211,16 @@ const OrderFormData = () => {
 					></motion.textarea>
 				</div>
 
+				<div className='mt-10 text-black'>
+					<div className='flex gap-2 items-center'>
+						<div className='w-5 h-5 bg-blue-500 rounded-2xl outline outline-1 outline-blue-500 outline-offset-2'></div>
+						<h1 className='text-2xl'>Thanh toán khi nhận hàng</h1>
+					</div>
+				</div>
+
 				<button
 					onClick={handleSubmit}
-					className='w-full bg-blue-500 rounded-full text-white py-2 text-2xl font-bold'
+					className='w-full bg-blue-500 rounded-full text-white py-3 text-2xl flex items-center justify-center font-bold'
 				>
 					{loading ? <CircleLoader /> : "Hoàn tất"}
 				</button>

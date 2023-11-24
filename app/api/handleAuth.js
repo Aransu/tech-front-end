@@ -3,7 +3,7 @@ import { axiosClient } from "./axiosClient"
 export const handleAuth = {
 	register: async (formData) =>
 		await axiosClient.post(
-			"/User/register",
+			"/auth/register",
 			formData
 		),
 	login: async (formData) =>

@@ -26,4 +26,19 @@ export const handleProduct = {
 				},
 			}
 		),
+
+	updateProduct: async (data, token) =>
+		await axiosClient.put("/update/" + data.product_id, data,
+			{
+				headers:
+					{ Authorization: `Bearer ${token}` },
+			}
+		),
+
+	deleteImageOfProduct: async (id, image_path) =>
+		await axiosClient.post("/deleteImage/" + id, image_path,
+			{
+				headers:
+					{ Authorization: `Bearer ${token}` },
+			}),
 }
